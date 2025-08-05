@@ -24,3 +24,48 @@ for pokemon in "${pokemon_list[@]}"; do
     sleep 2
 done
 
+
+
+
+#!/bin/bash
+
+# List of Pokémon
+pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+API_URL="https://pokeapi.co/api/v2/pokemon"
+ERROR_FILE="errors.txt"
+
+# Clear previous error log
+> "$ERROR_FILE"
+
+# Loop through Pokémon list
+for pokemon in "${pokemon_list[@]}"; do
+    echo "Fetching data for $pokemon..."
+    attempt=1
+    success=false
+
+    # Retry up to 3 times
+    while [ $attempt -le 3 ]; do
+        # Capture HTTP status
+        status_code=$(curl -s -o "${pokemon}.json" -w "%{http_code}" "${API_URL}/${pokemon}")
+
+        if [ "$status_code" -eq 200 ]; then
+            echo "Saved data to ${pokemon}.json"
+            success=true
+            break
+        else
+            echo "Attempt $attempt for $pokemon failed (HTTP $status_code)"
+            ((attempt++))
+            sleep 1
+        fi
+    done
+
+    # Log error if all attempts fail
+    if [ "$success" = false ]; then
+        echo "Failed to fetch $pokemon after 3 attempts" >> "$ERROR_FILE"
+        rm -f "${pokemon}.json" # remove incomplete file
+    fi
+
+    # Delay to avoid hitting API limits
+    sleep 2
+done
+
