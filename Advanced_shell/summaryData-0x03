@@ -8,7 +8,7 @@ echo "Name,Height(m),Weight(kg)" > "$CSV_FILE"
 
 # Loop through all JSON files
 for file in *.json; do
-    name=$(jq -r '.name' "$file")
+	name=$(jq -r '.name' "$file" | sed 's/.*/\u&/')
     height=$(jq -r '.height' "$file")   # decimeters
     weight=$(jq -r '.weight' "$file")   # hectograms
 
@@ -25,4 +25,3 @@ echo "CSV report saved to $CSV_FILE"
 # Calculate averages with awk
 awk -F, 'NR>1 {h+=$2; w+=$3; count++} END {print "Average Height(m): " h/count; print "Average Weight(kg): " w/count}' "$CSV_FILE
 ~
-
