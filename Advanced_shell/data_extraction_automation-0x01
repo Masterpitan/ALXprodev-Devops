@@ -1,0 +1,18 @@
+#!/bin/bash
+
+
+DATA_FILE="data.json"
+
+
+NAME=$(jq -r '.name' "$DATA_FILE")
+HEIGHT=$(jq -r '.height' "$DATA_FILE")
+WEIGHT=$(jq -r '.weight' "$DATA_FILE")
+TYPE=$(jq -r '.types[0].type.name' "$DATA_FILE")
+
+
+HEIGHT_M=$(awk "BEGIN {printf \"%.1f\", $HEIGHT / 10}")
+WEIGHT_KG=$(awk "BEGIN {printf \"%.0f\", $WEIGHT / 10}")
+
+
+echo "$NAME is of type $TYPE, weighs ${WEIGHT_KG}kg, and is ${HEIGHT_M}m tall."
+
