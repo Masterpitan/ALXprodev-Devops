@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# List of Pokémon
+pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+# Base API URL
+API_URL="https://pokeapi.co/api/v2/pokemon"
+
+# Error file (clear previous)
+ERROR_FILE="errors.txt"
+> "$ERROR_FILE"
+
+# Function to fetch data for a single Pokémon
+fetch_pokemon() {
+    local pokemon=$1
+    local file="${pokemon}.json"
+    local retries=3
+    local attempt=1
+
+    while [ $attempt -le $retries ]; do
+        status_code=$(curl -s -o "$file" -w "%{http_code}" "${API_URL}/${pokemon}")
+
+        if [ "$status_code" -eq 200 ]; then
+            echo "$pokemon fetched successfully"
+            return 0
+        else
+            echo "$pokemon attempt $attempt failed (HTTP $status_code)"
+            ((attempt++))
+            sleep 1
+        fi
+    done
+
+    echo "❌ Failed to fetch $pokemon after $retries attempts" >> "$ERROR_FILE"
+    rm -f "$file"
+}
+
+
+for pokemon in "${pokemon_list[@]}"; do
+    fetch_pokemon "$pokemon" &
+done
+
+
+wait
+
+echo "Fetch operations have now been completed"
+
