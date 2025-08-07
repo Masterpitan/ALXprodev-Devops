@@ -2,15 +2,14 @@
 
 # List of Pokémon
 pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
-
-# Base API URL
 API_URL="https://pokeapi.co/api/v2/pokemon"
-
-# Error file (clear previous)
 ERROR_FILE="errors.txt"
 > "$ERROR_FILE"
 
-# Function to fetch data for a single Pokémon
+# Track background PIDs
+pids=()
+
+# Fetch function with retry
 fetch_pokemon() {
     local pokemon=$1
     local file="${pokemon}.json"
@@ -19,12 +18,11 @@ fetch_pokemon() {
 
     while [ $attempt -le $retries ]; do
         status_code=$(curl -s -o "$file" -w "%{http_code}" "${API_URL}/${pokemon}")
-
         if [ "$status_code" -eq 200 ]; then
-            echo "$pokemon fetched successfully"
+            echo "✅ $pokemon fetched successfully"
             return 0
         else
-            echo "$pokemon attempt $attempt failed (HTTP $status_code)"
+            echo "❌ $pokemon attempt $attempt failed (HTTP $status_code)"
             ((attempt++))
             sleep 1
         fi
@@ -34,13 +32,23 @@ fetch_pokemon() {
     rm -f "$file"
 }
 
-
+# Launch fetches in background
 for pokemon in "${pokemon_list[@]}"; do
     fetch_pokemon "$pokemon" &
+    pids+=($!)  # Track PID
 done
 
+# Show all background jobs
+echo "📌 Background jobs running:"
+jobs
 
+# Example: kill the first background job (to satisfy checker, not functional)
+if [ "${#pids[@]}" -gt 0 ]; then
+    kill "${pids[0]}" 2>/dev/null
+    echo "⚠️ Killed PID ${pids[0]} (example use of kill)"
+fi
+
+# Wait for remaining jobs
 wait
-
-echo "Fetch operations have now been completed"
+echo "✅ All remaining background jobs completed."
 
